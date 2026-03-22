@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeshOps | AI Infrastructure Control Plane</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #050505; color: #e2e8f0; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .node-card:hover { border-color: #3b82f6; background: rgba(30, 41, 59, 0.5); }
+        .status-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <header class="h-16 border-b border-white/10 bg-black/40 backdrop-blur-md px-6 flex justify-between items-center z-50">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-blue-600 rounded flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            </div>
+            <div>
+                <h1 class="text-sm font-bold uppercase tracking-widest text-white">Mesh Operations Dashboard</h1>
+                <p class="text-[10px] text-blue-500 font-bold mono uppercase">Distributed Infrastructure Control Plane</p>
+            </div>
+        </div>
+        <div class="flex gap-10 items-center">
+            <div class="text-right">
+                <p class="text-[9px] text-slate-500 uppercase font-bold">Global Mesh Status</p>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 status-pulse"></span>
+                    <span class="text-xs font-bold text-emerald-500 mono">SYNCHRONIZED</span>
+                </div>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded px-3 py-1 text-center">
+                <p class="text-[9px] text-slate-500 uppercase font-bold">Network Load</p>
+                <p class="text-xs font-bold text-white mono">42.8%</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden">
+        
+        <aside class="w-80 border-r border-white/5 bg-black/20 flex flex-col overflow-hidden">
+            <div class="p-4 bg-white/5 border-b border-white/5">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Agent Machines</h2>
+                    <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300 mono">Count: 5</span>
+                </div>
+                <input type="text" placeholder="Search Node ID..." class="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 outline-none">
+            </div>
+            <div id="nodeList" class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
+                </div>
+        </aside>
+
+        <section class="flex-1 flex flex-col p-6 overflow-hidden gap-6 bg-[#080808]">
+            
+            <div class="grid grid-cols-3 gap-4">
+                <div class="bg-white/5 border border-white/10 p-5 rounded-lg relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-30 transition-opacity">
+                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Mesh Latency</p>
+                    <div class="flex items-baseline gap-2 mt-1">
+                        <span id="metric-latency" class="text-4xl font-bold mono text-white">24</span>
+                        <span class="text-blue-500 text-sm font-bold mono underline underline-offset-4">ms</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-5 rounded-lg">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Throughput</p>
+                    <div class="flex items-baseline gap-2 mt-1">
+                        <span id="metric-throughput" class="text-4xl font-bold mono text-white">1,420</span>
+                        <span class="text-slate-500 text-sm font-bold mono">req/s</span>
+                    </div>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-5 rounded-lg border-l-4 border-l-blue-600">
+                    <p class="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Tasks Processed / Min</p>
+                    <div class="flex items-baseline gap-2 mt-1">
+                        <span id="metric-tasks" class="text-4xl font-bold mono text-white">12,842</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 grid grid-cols-5 gap-6 min-h-0">
+                <div class="col-span-3 bg-white/5 border border-white/10 rounded-lg p-6 flex flex-col">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-1 h-3 bg-blue-600 rounded"></span> Telemetry Performance Stream
+                        </h3>
+                        <div class="flex gap-4">
+                            <button class="text-[10px] font-bold text-blue-500 border border-blue-500/30 px-2 py-1 rounded">15m</button>
+                            <button class="text-[10px] font-bold text-slate-500 hover:text-white transition-colors">1h</button>
+                        </div>
+                    </div>
+                    <div class="flex-1 relative">
+                        <canvas id="telemetryChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="col-span-2 bg-black border border-white/10 rounded-lg flex flex-col overflow-hidden">
+                    <div class="px-4 py-3 border-b border-white/10 bg-white/5 flex justify-between items-center">
+                        <span class="text-[10px] font-bold text-slate-300 tracking-widest uppercase">Node Telemetry Traces</span>
+                        <span class="text-[10px] text-emerald-500 mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded animate-pulse">LIVE</span>
+                    </div>
+                    <div id="logStream" class="flex-1 p-4 mono text-[11px] overflow-y-auto custom-scrollbar space-y-2 leading-relaxed">
+                        </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // --- 1. REQUIREMENT: INTEGRATE TELEMETRY (MOCK DATA SOURCE) ---
+        const nodes = [
+            { id: 'agent-us-east-01', status: 'online', taskRate: 412 },
+            { id: 'agent-us-west-04', status: 'online', taskRate: 289 },
+            { id: 'agent-eu-c-09', status: 'degraded', taskRate: 115 },
+            { id: 'agent-ap-s-12', status: 'online', taskRate: 340 },
+            { id: 'agent-br-s-02', status: 'offline', taskRate: 0 }
+        ];
+
+        // --- 2. REQUIREMENT: NODE STATUS DISPLAY ---
+        const nodeList = document.getElementById('nodeList');
+        nodes.forEach(node => {
+            const statusColor = node.status === 'online' ? 'bg-emerald-500' : node.status === 'degraded' ? 'bg-amber-500' : 'bg-rose-500';
+            const statusText = node.status === 'online' ? 'text-emerald-500' : node.status === 'degraded' ? 'text-amber-500' : 'text-rose-500';
+            
+            nodeList.innerHTML += `
+                <div class="node-card p-3 bg-white/5 border border-white/5 rounded-lg transition-all cursor-pointer">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold text-white">${node.id}</span>
+                            <span class="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">AI Load: ${(Math.random()*100).toFixed(1)}%</span>
+                        </div>
+                        <span class="w-1.5 h-1.5 rounded-full ${statusColor} status-pulse mt-1"></span>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <span class="text-[10px] font-bold mono uppercase ${statusText}">${node.status}</span>
+                        <span class="text-[10px] text-slate-400 mono">${node.taskRate} tasks</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        // --- 3. CHART CONFIGURATION (LATENCY & THROUGHPUT) ---
+        const ctx = document.getElementById('telemetryChart').getContext('2d');
+        const telemetryChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array(25).fill(''),
+                datasets: [{
+                    label: 'Latency (ms)',
+                    data: Array(25).fill(25),
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.3,
+                    fill: true,
+                    backgroundColor: 'rgba(59, 130, 246, 0.05)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } } },
+                    x: { display: false }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // --- 4. REQUIREMENT: TELEMETRY TRACES LOGIC ---
+        const logStream = document.getElementById('logStream');
+        const traceTypes = ['TASK_COMPLETE', 'NODE_SYNC', 'TELEM_POST', 'HEARTBEAT', 'TRACE_REPORT'];
+
+        function addTrace() {
+            const type = traceTypes[Math.floor(Math.random() * traceTypes.length)];
+            const nodeId = nodes[Math.floor(Math.random() * nodes.length)].id;
+            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+            
+            const logLine = document.createElement('div');
+            logLine.innerHTML = `
+                <span class="text-slate-600">[${time}]</span> 
+                <span class="text-blue-500 font-bold">${nodeId}</span> 
+                <span class="text-slate-400">::</span> 
+                <span class="text-white">${type}</span> 
+                <span class="text-emerald-500/80">success=true</span>
+            `;
+            logStream.prepend(logLine);
+            if (logStream.children.length > 30) logStream.removeChild(logStream.lastChild);
+        }
+
+        // --- 5. REAL-TIME DATA SIMULATION ---
+        setInterval(() => {
+            // Update Metric Values
+            const latency = (Math.random() * (28 - 22) + 22).toFixed(1);
+            document.getElementById('metric-latency').innerText = latency;
+            document.getElementById('metric-throughput').innerText = Math.floor(Math.random() * (1500 - 1300) + 1300);
+            document.getElementById('metric-tasks').innerText = Math.floor(Math.random() * (13000 - 12000) + 12000).toLocaleString();
+
+            // Update Chart
+            telemetryChart.data.datasets[0].data.shift();
+            telemetryChart.data.datasets[0].data.push(parseFloat(latency));
+            telemetryChart.update('none');
+
+            // Add Trace
+            addTrace();
+        }, 1200);
+
+    </script>
+</body>
+</html>
